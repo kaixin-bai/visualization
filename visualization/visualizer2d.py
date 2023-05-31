@@ -4,6 +4,7 @@ Author: Jeff Mahler
 """
 import matplotlib.pyplot as plt
 import numpy as np
+from copy import deepcopy
 from autolab_core import (
     BinaryImage,
     Box,
@@ -123,6 +124,10 @@ class Visualizer2D:
         plt.plot(*args, **kwargs)
 
     @staticmethod
+    def close(*args, **kwargs):
+        plt.close(*args, **kwargs)
+
+    @staticmethod
     def imshow(image, auto_subplot=False, **kwargs):
         """Displays an image.
         Parameters
@@ -132,12 +137,25 @@ class Visualizer2D:
         auto_subplot : bool
             whether or not to automatically subplot for multi-channel images e.g. rgbd
         """
+        def __rescale_depth_img(depth_image):
+            """
+            hard code for visualization!
+            """
+            depth_image = deepcopy(depth_image)
+            depth_image[np.where(depth_image<0.1)] = depth_image.max()
+            max_depth = np.max(depth_image)
+            min_depth = np.min(depth_image)
+            depth_image_scaled = (depth_image - min_depth) / (max_depth - min_depth)
+            return depth_image_scaled
+
         if isinstance(image, BinaryImage) or isinstance(image, GrayscaleImage):
             plt.imshow(image.data, cmap=plt.cm.gray, **kwargs)
         elif isinstance(image, ColorImage) or isinstance(image, SegmentationImage):
             plt.imshow(image.data, **kwargs)
         elif isinstance(image, DepthImage):
-            plt.imshow(image.data, cmap=plt.cm.gray_r, **kwargs)
+            # plt.imshow(image.data, cmap=plt.cm.gray_r, **kwargs)
+            plt.imshow(image.data, cmap='jet', **kwargs)
+            # plt.imshow(__rescale_depth_img(image.data), cmap='jet', **kwargs)
         elif isinstance(image, RgbdImage):
             if auto_subplot:
                 plt.subplot(1, 2, 1)
